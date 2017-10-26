@@ -1,3 +1,4 @@
+import ctypes
 import math
 import sys
 
@@ -41,9 +42,9 @@ class Board:
 
 
 pygame.init()
-length = 900
-width = 900
-screen = pygame.display.set_mode((width, length))
+height = 600
+width = 800
+screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
 screen_clip = screen.get_clip()
 mouse_button3_down = False
 mouse_button1_down = False
@@ -59,6 +60,8 @@ black = (0, 0, 0)
 font = pygame.font.SysFont('arial', 16)
 clear_screen = True
 grid = True
+fullscreen = False
+user32 = ctypes.windll.user32
 clock = pygame.time.Clock()
 
 d = 300
@@ -86,18 +89,31 @@ while 1:
         if event.type is pygame.QUIT:
             sys.exit()
 
+        elif event.type is pygame.VIDEORESIZE:
+            if not fullscreen:
+                width, height = event.size
+                screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+                screen_clip = screen.get_clip()
+
         elif event.type is pygame.KEYDOWN:
             if event.key is pygame.K_c:
                 clear_screen = not clear_screen
             elif event.key is pygame.K_g:
                 grid = not grid
+            elif event.key is pygame.K_f:
+                if fullscreen:
+                    screen = pygame.display.set_mode((800, 600), pygame.RESIZABLE)
+                    screen_clip = screen.get_clip()
+                else:
+                    width, height = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+                    screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+                    screen_clip = screen.get_clip()
+                fullscreen = not fullscreen
 
         elif event.type is pygame.MOUSEBUTTONDOWN:
             if event.button is 1:
                 mouse_button1_down = True
-                b.add(
-                    math.floor((event.pos[0] - offset[0]) / size),
-                    math.floor((event.pos[1] - offset[1]) / size))
+                b.add(math.floor((event.pos[0] - offset[0]) / size), math.floor((event.pos[1] - offset[1]) / size))
             elif event.button is 3:
                 mouse_button3_down = True
                 start_pos[0] = event.pos[0]
@@ -105,12 +121,12 @@ while 1:
             elif event.button is 4:
                 size += 1
                 offset[0] += (offset[0] - (width / 2)) / (size - 1)
-                offset[1] += (offset[1] - (length / 2)) / (size - 1)
+                offset[1] += (offset[1] - (height / 2)) / (size - 1)
             elif event.button is 5:
                 if size > 1:
                     size -= 1
                     offset[0] -= (offset[0] - (width / 2)) / (size + 1)
-                    offset[1] -= (offset[1] - (length / 2)) / (size + 1)
+                    offset[1] -= (offset[1] - (height / 2)) / (size + 1)
         elif event.type is pygame.MOUSEBUTTONUP:
             if event.button is 3:
                 mouse_button3_down = False
@@ -137,15 +153,11 @@ while 1:
         for i in range(
                 math.floor((offset[0] % size) - size),
                 math.floor(width / size) + size):
-            screen.fill(grey,
-                        pygame.Rect(i * size + offset[0] % size, 0, 1,
-                                    length).clip(screen_clip))
+            screen.fill(grey, pygame.Rect(i * size + offset[0] % size, 0, 1, height))
         for i in range(
                 math.floor((offset[1] % size) - size),
-                math.floor(length / size) + size):
-            screen.fill(grey,
-                        pygame.Rect(0, i * size + offset[1] % size, width,
-                                    1).clip(screen_clip))
+                math.floor(height / size) + size):
+            screen.fill(grey, pygame.Rect(0, i * size + offset[1] % size, width, 1))
 
     b.draw_board()
 
